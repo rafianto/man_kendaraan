@@ -1,0 +1,212 @@
+{% extends 'pemeliharaan/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Dashboard{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- ========================================== -->
+<!-- ROW 1: STAT CARDS UTAMA (HARIAN & BULANAN) -->
+<!-- ========================================== -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary me-3">
+                    <i class="bi bi-truck"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ total_kendaraan }}</div>
+                    <div class="stat-label">Total Kendaraan Aktif</div>
+                </div>
+            </div>
+            <div class="mt-2" style="font-size:0.78rem; color:#94a3b8;">
+                <span class="badge badge-mobil">Mobil: {{ total_kendaraan_mobil }}</span>
+                <span class="badge badge-motor">Motor: {{ total_kendaraan_motor }}</span>
+                <span class="badge badge-sepeda_listrik">Sepeda Listrik: {{ total_kendaraan_sepeda }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left: 4px solid #ef4444;">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon bg-danger bg-opacity-10 text-danger me-3">
+                    <i class="bi bi-calendar-event"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ total_hari_ini|rupiah }}</div>
+                    <div class="stat-label">Servis Hari Ini ({{ jumlah_servis_hari }} trx)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left: 4px solid #f59e0b;">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning me-3">
+                    <i class="bi bi-fuel-pump"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ total_bensin_hari|rupiah }}</div>
+                    <div class="stat-label">Bensin Hari Ini</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left: 4px solid #8b5cf6;">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon bg-opacity-10 me-3" style="background:#f3e8ff; color:#8b5cf6;">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ grand_total_bulan|rupiah }}</div>
+                    <div class="stat-label">Grand Total Bulan Ini</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- ROW 2: RINCIAN BULAN INI                   -->
+<!-- ========================================== -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card text-center" style="border-top:3px solid #3b82f6;">
+            <div style="font-size:0.78rem; color:#64748b; margin-bottom:4px;">Total Spare Part (Bulan)</div>
+            <div style="font-size:1.3rem; font-weight:700; color:#3b82f6;">{{ sp_bulan_ini|rupiah }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card text-center" style="border-top:3px solid #22c55e;">
+            <div style="font-size:0.78rem; color:#64748b; margin-bottom:4px;">Total Jasa Servis (Bulan)</div>
+            <div style="font-size:1.3rem; font-weight:700; color:#22c55e;">{{ js_bulan_ini|rupiah }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card text-center" style="border-top:3px solid #f59e0b;">
+            <div style="font-size:0.78rem; color:#64748b; margin-bottom:4px;">Konsumsi Bensin (Bulan)</div>
+            <div style="font-size:1.3rem; font-weight:700; color:#f59e0b;">{{ total_bensin_bulan|rupiah }}</div>
+            <div style="font-size:0.72rem; color:#94a3b8;">{{ liter_bulan_ini|floatformat:1 }} Liter</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card text-center" style="border-top:3px solid #ef4444;">
+            <div style="font-size:0.78rem; color:#64748b; margin-bottom:4px;">Total Pemeliharaan (Bulan)</div>
+            <div style="font-size:1.3rem; font-weight:700; color:#ef4444;">{{ total_bulan_ini|rupiah }}</div>
+            <div style="font-size:0.72rem; color:#94a3b8;">{{ jumlah_servis_bulan }} kali servis</div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- ROW 3: TABEL RINCIAN & RIWAYAT TERBARU     -->
+<!-- ========================================== -->
+<div class="row g-3">
+    <!-- Rincian Biaya per Kendaraan Bulan Ini -->
+    <div class="col-lg-8">
+        <div class="data-table p-3">
+            <h6 class="mb-3" style="font-weight:600; color:#1e293b;">
+                <i class="bi bi-car-front me-2 text-primary"></i>Rincian Biaya per Kendaraan (Bulan Ini)
+            </h6>
+            {% if kendaraan_biaya %}
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Kendaraan</th>
+                            <th class="text-center">Liter Bensin</th>
+                            <th class="text-end">Biaya Bensin</th>
+                            <th class="text-end">Biaya Servis</th>
+                            <th class="text-end">Total Biaya</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in kendaraan_biaya %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'pemeliharaan:kendaraan_detail' item.kendaraan.pk %}" style="text-decoration:none; color:#1e293b; font-weight:500;">
+                                {{ item.kendaraan.nomor_polisi }}
+                            </a>
+                            <div style="font-size:0.75rem; color:#94a3b8;">{{ item.kendaraan.merk }} {{ item.kendaraan.tipe }}</div>
+                        </td>
+                        <td class="text-center">
+                            {% if item.liter_bensin > 0 %}
+                                <span class="badge bg-warning text-dark">{{ item.liter_bensin|floatformat:1 }} L</span>
+                            {% else %}
+                                <span class="text-muted" style="font-size:0.8rem;">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end" style="color:#f59e0b; font-weight:500;">{{ item.total_bensin|rupiah }}</td>
+                        <td class="text-end">{{ item.total_servis|rupiah }}</td>
+                        <td class="text-end fw-bold" style="color:#ef4444;">{{ item.total_biaya|rupiah }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted text-center py-3" style="font-size:0.85rem;">Belum ada pemeliharaan atau pengisian bensin bulan ini</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Riwayat Terbaru (Servis & Bensin) -->
+    <div class="col-lg-4">
+        <div class="data-table p-3 mb-3">
+            <h6 class="mb-3" style="font-weight:600; color:#1e293b;">
+                <i class="bi bi-clock-history me-2 text-success"></i>Servis Terbaru
+            </h6>
+            {% if servis_terbaru %}
+            <div class="table-responsive">
+                <table class="table table-sm table-borderless">
+                    <tbody>
+                    {% for s in servis_terbaru %}
+                    <tr>
+                        <td style="font-size:0.83rem; width:75px; color:#64748b;">{{ s.tanggal_servis|date:"d M" }}</td>
+                        <td style="font-size:0.83rem;">
+                            <a href="{% url 'pemeliharaan:pemeliharaan_detail' s.pk %}" style="text-decoration:none; font-weight:500; color:#1e293b;">
+                                {{ s.kendaraan.nomor_polisi }}
+                            </a>
+                        </td>
+                        <td class="text-end fw-semibold" style="font-size:0.83rem; color:#ef4444;">{{ s.total_biaya|rupiah }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted text-center py-2" style="font-size:0.85rem;">Belum ada data</p>
+            {% endif %}
+        </div>
+
+        <div class="data-table p-3">
+            <h6 class="mb-3" style="font-weight:600; color:#1e293b;">
+                <i class="bi bi-fuel-pump me-2 text-warning"></i>Bensin Terbaru
+            </h6>
+            {% if bensin_terbaru %}
+            <div class="table-responsive">
+                <table class="table table-sm table-borderless">
+                    <tbody>
+                    {% for b in bensin_terbaru %}
+                    <tr>
+                        <td style="font-size:0.83rem; width:75px; color:#64748b;">{{ b.tanggal|date:"d M" }}</td>
+                        <td style="font-size:0.83rem;">
+                            <span style="font-weight:500; color:#1e293b;">{{ b.kendaraan.nomor_polisi }}</span>
+                            <div class="text-muted" style="font-size:0.7rem;">{{ b.liter|floatformat:1 }} Liter</div>
+                        </td>
+                        <td class="text-end fw-semibold text-warning" style="font-size:0.83rem;">{{ b.total_biaya|rupiah }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted text-center py-2" style="font-size:0.85rem;">Belum ada data</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

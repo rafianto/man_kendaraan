@@ -1,0 +1,236 @@
+{% extends 'pemeliharaan/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Laporan Biaya{% endblock %}
+{% block nav_laporan %}active{% endblock %}
+{% block page_title %}Laporan Biaya Pemeliharaan{% endblock %}
+
+{% block content %}
+<!-- Filter Form -->
+<div class="data-table p-3 mb-4">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-2">
+            <label class="form-label fw-semibold" style="font-size:0.8rem;">Periode</label>
+            <select name="periode" class="form-select form-select-sm" id="id_periode">
+                <option value="harian" {% if periode == 'harian' %}selected{% endif %}>Harian</option>
+                <option value="mingguan" {% if periode == 'mingguan' %}selected{% endif %}>Mingguan</option>
+                <option value="bulanan" {% if periode == 'bulanan' %}selected{% endif %}>Bulanan</option>
+                <option value="custom" {% if periode == 'custom' %}selected{% endif %}>Custom</option>
+            </select>
+        </div>
+        <div class="col-md-2 custom-date" style="{% if periode != 'custom' %}display:none;{% endif %}">
+            <label class="form-label fw-semibold" style="font-size:0.8rem;">Dari Tanggal</label>
+            <input type="date" name="start_date" class="form-control form-control-sm" value="{{ custom_start }}">
+        </div>
+        <div class="col-md-2 custom-date" style="{% if periode != 'custom' %}display:none;{% endif %}">
+            <label class="form-label fw-semibold" style="font-size:0.8rem;">Sampai Tanggal</label>
+            <input type="date" name="end_date" class="form-control form-control-sm" value="{{ custom_end }}">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label fw-semibold" style="font-size:0.8rem;">Kendaraan</label>
+            <select name="kendaraan" class="form-select form-select-sm">
+                <option value="">Semua Kendaraan</option>
+                {% for k in kendaraan_list %}
+                <option value="{{ k.pk }}" {% if selected_kendaraan == k.pk|slugify %}selected{% endif %}>{{ k.nomor_polisi }} - {{ k.merk }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <!-- <div class="col-md-2">
+            <button type="submit" class="btn btn-sm btn-primary-custom w-100"><i class="bi bi-funnel me-1"></i>Filter</button>
+        </div> -->
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-sm btn-primary-custom flex-grow-1"><i class="bi bi-funnel me-1"></i>Filter</button>
+            <button type="button" id="btn-export-excel" class="btn btn-sm btn-success flex-grow-1"><i class="bi bi-file-earmark-excel me-1"></i>Excel</button>
+        </div>
+    
+    </form>
+    <div class="text-muted mt-2" style="font-size:0.8rem;">
+        Menampilkan data dari <strong>{{ start_date|date:"d M Y" }}</strong> sampai <strong>{{ end_date|date:"d M Y" }}</strong>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<!-- Summary Cards (Ganti yang lama) -->
+<div class="row g-3 mb-4">
+    <div class="col-md-2">
+        <div class="stat-card text-center" style="border-top:3px solid #3b82f6;">
+            <div style="font-size:0.78rem; color:#64748b;">Total Spare Part</div>
+            <div style="font-size:1.1rem; font-weight:700; color:#3b82f6;">{{ total_sparepart|rupiah }}</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card text-center" style="border-top:3px solid #22c55e;">
+            <div style="font-size:0.78rem; color:#64748b;">Total Jasa Servis</div>
+            <div style="font-size:1.1rem; font-weight:700; color:#22c55e;">{{ total_jasa|rupiah }}</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card text-center" style="border-top:3px solid #f59e0b;">
+            <div style="font-size:0.78rem; color:#64748b;">Total Bensin</div>
+            <div style="font-size:1.1rem; font-weight:700; color:#f59e0b;">{{ total_bensin|rupiah }}</div>
+            <div style="font-size:0.7rem; color:#94a3b8;">{{ total_liter }} Liter</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card text-center" style="border-top:3px solid #8b5cf6;">
+            <div style="font-size:0.78rem; color:#64748b;">Grand Total</div>
+            <div style="font-size:1.1rem; font-weight:700; color:#8b5cf6;">{{ grand_total_biaya|rupiah }}</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card text-center" style="border-top:3px solid #ef4444;">
+            <div style="font-size:0.78rem; color:#64748b;">Total Servis</div>
+            <div style="font-size:1.1rem; font-weight:700; color:#ef4444;">{{ jumlah_servis }}</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card text-center" style="border-top:3px solid #06b6d4;">
+            <div style="font-size:0.78rem; color:#64748b;">Total Pengisian</div>
+            <div style="font-size:1.1rem; font-weight:700; color:#06b6d4;">{{ jumlah_pengisian }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Tambahkan tabel ini setelah tabel Biaya per Bengkel -->
+<!-- Breakdown Bensin per Kendaraan -->
+<div class="data-table p-3 mt-3">
+    <h6 class="mb-3" style="font-weight:600;"><i class="bi bi-fuel-pump me-2 text-warning"></i>Biaya Bensin per Kendaraan</h6>
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <thead><tr><th>Kendaraan</th><th class="text-center">Jumlah Isi</th><th class="text-end">Total Liter</th><th class="text-end">Total Biaya</th></tr></thead>
+            <tbody>
+            {% for item in bensin_breakdown %}
+            <tr>
+                <td>
+                    <span class="badge badge-{{ item.kendaraan__jenis }} me-1" style="font-size:0.6rem;">{{ item.kendaraan__jenis }}</span>
+                    {{ item.kendaraan__nomor_polisi }}
+                    <div class="text-muted" style="font-size:0.7rem;">{{ item.kendaraan__merk }}</div>
+                </td>
+                <td class="text-center">{{ item.jumlah_isi }}x</td>
+                <td class="text-end">{{ item.total_liter|floatformat:2 }} L</td>
+                <td class="text-end fw-semibold text-danger">{{ item.total_bensin|rupiah }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-muted py-3" style="font-size:0.8rem;">Tidak ada data bensin</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Breakdown per Kendaraan -->
+    <div class="col-lg-6">
+        <div class="data-table p-3">
+            <h6 class="mb-3" style="font-weight:600;"><i class="bi bi-car-front me-2 text-primary"></i>Biaya per Kendaraan</h6>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead><tr><th>Kendaraan</th><th class="text-center">Servis</th><th class="text-end">Spare Part</th><th class="text-end">Jasa</th><th class="text-end">Total</th></tr></thead>
+                    <tbody>
+                    {% for item in kendaraan_breakdown %}
+                    <tr>
+                        <td>
+                            <span class="badge badge-{{ item.kendaraan__jenis }} me-1" style="font-size:0.6rem;">{{ item.kendaraan__jenis }}</span>
+                            {{ item.kendaraan__nomor_polisi }}
+                            <div class="text-muted" style="font-size:0.7rem;">{{ item.kendaraan__merk }}</div>
+                        </td>
+                        <td class="text-center">{{ item.jumlah_servis }}</td>
+                        <td class="text-end">{{ item.total_sparepart|rupiah }}</td>
+                        <td class="text-end">{{ item.total_jasa|rupiah }}</td>
+                        <td class="text-end fw-semibold text-danger">{{ item.total_biaya|rupiah }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center text-muted py-3" style="font-size:0.8rem;">Tidak ada data</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Breakdown per Bengkel -->
+    <div class="col-lg-6">
+        <div class="data-table p-3">
+            <h6 class="mb-3" style="font-weight:600;"><i class="bi bi-building me-2 text-success"></i>Biaya per Bengkel</h6>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead><tr><th>Bengkel</th><th class="text-center">Servis</th><th class="text-end">Spare Part</th><th class="text-end">Jasa</th><th class="text-end">Total</th></tr></thead>
+                    <tbody>
+                    {% for item in bengkel_breakdown %}
+                    <tr>
+                        <td>
+                            {{ item.bengkel__nama_bengkel }}
+                            <div class="text-muted" style="font-size:0.7rem;">{{ item.bengkel__kota }}</div>
+                        </td>
+                        <td class="text-center">{{ item.jumlah_servis }}</td>
+                        <td class="text-end">{{ item.total_sparepart|rupiah }}</td>
+                        <td class="text-end">{{ item.total_jasa|rupiah }}</td>
+                        <td class="text-end fw-semibold text-danger">{{ item.total_biaya|rupiah }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center text-muted py-3" style="font-size:0.8rem;">Tidak ada data</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detail Transaksi -->
+<div class="data-table p-3 mt-3">
+    <h6 class="mb-3" style="font-weight:600;"><i class="bi bi-list-ul me-2 text-info"></i>Detail Transaksi Periode Ini</h6>
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <thead><tr><th>Tanggal</th><th>No Servis</th><th>Kendaraan</th><th>Bengkel</th><th class="text-end">Spare Part</th><th class="text-end">Jasa</th><th class="text-end">Total</th></tr></thead>
+            <tbody>
+            {% for s in pemeliharaan_list %}
+            <tr>
+                <td>{{ s.tanggal_servis|date:"d M Y" }}</td>
+                <td><a href="{% url 'pemeliharaan:pemeliharaan_detail' s.pk %}" style="color:#3b82f6; text-decoration:none;">{{ s.no_servis }}</a></td>
+                <td>{{ s.kendaraan.nomor_polisi }}</td>
+                <td>{{ s.bengkel.nama_bengkel }}</td>
+                <td class="text-end">{{ s.total_biaya_sparepart|rupiah }}</td>
+                <td class="text-end">{{ s.total_biaya_jasa|rupiah }}</td>
+                <td class="text-end fw-semibold">{{ s.total_biaya|rupiah }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="text-center text-muted py-3" style="font-size:0.8rem;">Tidak ada transaksi</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Toggle custom date inputs (kode lama)
+    const periodeSelect = document.getElementById('id_periode');
+    const customDates = document.querySelectorAll('.custom-date');
+    
+    function toggleCustomDates() {
+        if(periodeSelect.value === 'custom') {
+            customDates.forEach(el => el.style.display = 'block');
+        } else {
+            customDates.forEach(el => el.style.display = 'none');
+        }
+    }
+    if(periodeSelect) {
+        periodeSelect.addEventListener('change', toggleCustomDates);
+    }
+
+    // KODE BARU UNTUK EXPORT EXCEL
+    document.getElementById('btn-export-excel').addEventListener('click', function() {
+        // Ambil form filter
+        const form = this.closest('form');
+        const formData = new FormData(form);
+        
+        // Buat query string dari form filter
+        const params = new URLSearchParams(formData).toString();
+        
+        // Arahkan ke URL export excel dengan parameter filter yang sama
+        window.location.href = "{% url 'pemeliharaan:export_laporan_excel' %}?" + params;
+    });
+</script>
+{% endblock %}

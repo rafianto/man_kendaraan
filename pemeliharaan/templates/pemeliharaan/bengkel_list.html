@@ -1,0 +1,76 @@
+{% extends 'pemeliharaan/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Data Bengkel{% endblock %}
+{% block nav_bengkel %}active{% endblock %}
+{% block page_title %}Data Bengkel{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <form method="get" class="d-flex gap-2">
+        <input type="text" name="q" class="form-control form-control-sm" placeholder="Cari bengkel, pemilik, kota..." value="{{ search }}" style="width:280px;">
+        <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-search"></i></button>
+        {% if search %}
+        <a href="{% url 'pemeliharaan:bengkel_list' %}" class="btn btn-sm btn-outline-secondary" title="Reset Pencarian"><i class="bi bi-x-lg"></i></a>
+        {% endif %}
+    </form>
+    <a href="{% url 'pemeliharaan:bengkel_create' %}" class="btn btn-sm btn-primary-custom">
+        <i class="bi bi-plus-lg me-1"></i>Tambah Bengkel
+    </a>
+</div>
+
+<div class="data-table">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Nama Bengkel</th>
+                    <th>Pemilik</th>
+                    <th>Alamat</th>
+                    <th>Kota</th>
+                    <th>No. Telepon</th>
+                    <th>Jenis Ditangani</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for obj in object_list %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td class="fw-semibold">{{ obj.nama_bengkel }}</td>
+                <td>{{ obj.pemilik }}</td>
+                <td style="max-width:200px;">{{ obj.alamat|truncatechars:50 }}</td>
+                <td>{{ obj.kota }}</td>
+                <td>
+                    <a href="tel:{{ obj.no_telp }}" style="text-decoration:none; color:#1e293b;">
+                        <i class="bi bi-telephone me-1"></i>{{ obj.no_telp }}
+                    </a>
+                </td>
+                <td>{{ obj.jenis_kendaraan }}</td>
+                <td>
+                    <a href="{% url 'pemeliharaan:bengkel_update' obj.pk %}" class="btn btn-sm btn-outline-warning" title="Edit">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    
+                    <form method="post" action="{% url 'pemeliharaan:bengkel_delete' obj.pk %}" style="display:inline;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus bengkel {{ obj.nama_bengkel }}?')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center text-muted py-4">
+                    <i class="bi bi-building d-block" style="font-size:2rem;"></i>
+                    Belum ada data bengkel
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

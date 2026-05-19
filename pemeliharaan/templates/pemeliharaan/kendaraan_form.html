@@ -1,0 +1,131 @@
+{% extends 'pemeliharaan/base.html' %}
+{% load custom_filters %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block nav_kendaraan %}active{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="data-table p-4">
+            <h5 class="mb-3" style="font-weight:600;"><i class="bi bi-truck me-2 text-primary"></i>{{ title }}</h5>
+            
+            <!-- TAMBAHKAN enctype="multipart/form-data" UNTUK UPLOAD GAMBAR -->
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">{{ form.jenis.label }}</label>
+                        {{ form.jenis }}
+                        {% if form.jenis.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ form.jenis.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">{{ form.nomor_polisi.label }}</label>
+                        {{ form.nomor_polisi }}
+                        {% if form.nomor_polisi.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ form.nomor_polisi.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">{{ form.merk.label }}</label>
+                        {{ form.merk }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">{{ form.tipe.label }}</label>
+                        {{ form.tipe }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">{{ form.tahun_pembuatan.label }}</label>
+                        {{ form.tahun_pembuatan }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">{{ form.warna.label }}</label>
+                        {{ form.warna }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">{{ form.aktif.label }}</label>
+                        <div class="form-check form-switch mt-2">
+                            {{ form.aktif }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">{{ form.no_rangka.label }}</label>
+                        {{ form.no_rangka }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">{{ form.no_mesin.label }}</label>
+                        {{ form.no_mesin }}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">{{ form.pemilik_pengguna.label }}</label>
+                        {{ form.pemilik_pengguna }}
+                    </div>
+                    
+                    <!-- BAGIAN UPLOAD FOTO -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">{{ form.foto.label }}</label>
+                        {{ form.foto }}
+                        {% if form.foto.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ form.foto.errors.0 }}</div>{% endif %}
+                        <div class="form-text" style="font-size:0.75rem;">Format: JPG, PNG, WEBP. Maks: 5MB.</div>
+                    </div>
+                    
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">{{ form.keterangan.label }}</label>
+                        {{ form.keterangan }}
+                    </div>
+                </div>
+                <div class="mt-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary-custom"><i class="bi bi-save me-1"></i>Simpan</button>
+                    <a href="{% url 'pemeliharaan:kendaraan_list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Batal</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- PREVIEW GAMBAR SAAT EDIT -->
+    <div class="col-lg-4">
+        <div class="data-table p-4">
+            <h6 class="mb-3" style="font-weight:600; color:#1e293b;">Preview Foto</h6>
+            <div id="foto-preview-container">
+                {% if form.instance.foto %}
+                    <img id="foto-preview" src="{{ form.instance.foto.url }}" alt="Foto Kendaraan" style="width: 100%; max-height: 300px; object-fit: cover; border-radius: 10px; border: 1px solid #e2e8f0;">
+                    <small class="d-block text-muted mt-2 text-center">Foto saat ini</small>
+                {% else %}
+                    <div id="foto-placeholder" style="width: 100%; height: 200px; background: #f8fafc; border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 2px dashed #cbd5e1; flex-direction: column;">
+                        <i class="bi bi-camera" style="font-size: 3rem; color: #94a3b8;"></i>
+                        <span class="text-muted mt-2" style="font-size: 0.85rem;">Belum ada foto</span>
+                    </div>
+                    <img id="foto-preview" src="" alt="Preview" style="width: 100%; max-height: 300px; object-fit: cover; border-radius: 10px; border: 1px solid #e2e8f0; display: none;">
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // JavaScript untuk preview gambar sebelum upload
+    document.addEventListener('DOMContentLoaded', function() {
+        const fotoInput = document.getElementById('id_foto');
+        const fotoPreview = document.getElementById('foto-preview');
+        const fotoPlaceholder = document.getElementById('foto-placeholder');
+
+        if (fotoInput) {
+            fotoInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        fotoPreview.src = e.target.result;
+                        fotoPreview.style.display = 'block';
+                        if (fotoPlaceholder) {
+                            fotoPlaceholder.style.display = 'none';
+                        }
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

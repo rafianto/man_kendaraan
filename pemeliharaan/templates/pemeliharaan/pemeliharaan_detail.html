@@ -1,0 +1,200 @@
+{% extends 'pemeliharaan/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Detail Pemeliharaan{% endblock %}
+{% block nav_pemeliharaan %}active{% endblock %}
+{% block page_title %}Detail: {{ pemeliharaan.no_servis }}{% endblock %}
+
+{% block content %}
+<!-- Header Info -->
+<div class="data-table p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+        <div>
+            <h5 class="mb-1" style="font-weight:700; color:#1e293b;">
+                <i class="bi bi-clipboard-check me-2 text-primary"></i>{{ pemeliharaan.no_servis }}
+            </h5>
+            <span class="text-muted" style="font-size:0.85rem;">
+                {{ pemeliharaan.tanggal_servis|date:"d F Y" }} &bull; 
+                <span class="badge badge-{{ pemeliharaan.kendaraan.jenis }}">{{ pemeliharaan.kendaraan.get_jenis_display }}</span>
+                <strong>{{ pemeliharaan.kendaraan.nomor_polisi }}</strong> ({{ pemeliharaan.kendaraan.merk }}) &bull;
+                Bengkel: <strong>{{ pemeliharaan.bengkel.nama_bengkel }}</strong>
+                {% if pemeliharaan.km_saat_servis %} &bull; KM: <strong>{{ pemeliharaan.km_saat_servis }}</strong>{% endif %}
+            </span>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'pemeliharaan:export_kuitansi_excel' pemeliharaan.pk %}" class="btn btn-sm btn-success" target="_blank">
+                <i class="bi bi-file-earmark-excel me-1"></i>Download Kuitansi
+            </a>
+            <a href="{% url 'pemeliharaan:pemeliharaan_update' pemeliharaan.pk %}" class="btn btn-sm btn-outline-warning">
+                <i class="bi bi-pencil me-1"></i>Edit Header
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card text-center" style="border-top:3px solid #3b82f6;">
+            <div style="font-size:0.78rem; color:#64748b;">Total Spare Part</div>
+            <div style="font-size:1.4rem; font-weight:700; color:#3b82f6;">{{ pemeliharaan.total_biaya_sparepart|rupiah }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card text-center" style="border-top:3px solid #22c55e;">
+            <div style="font-size:0.78rem; color:#64748b;">Total Jasa Servis</div>
+            <div style="font-size:1.4rem; font-weight:700; color:#22c55e;">{{ pemeliharaan.total_biaya_jasa|rupiah }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card text-center" style="border-top:3px solid #ef4444;">
+            <div style="font-size:0.78rem; color:#64748b;">Grand Total</div>
+            <div style="font-size:1.4rem; font-weight:700; color:#ef4444;">{{ pemeliharaan.total_biaya|rupiah }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Kolom Kiri: Spare Part -->
+    <div class="col-lg-6">
+        <div class="data-table p-3">
+            <h6 class="mb-3" style="font-weight:600;"><i class="bi bi-gear me-2 text-primary"></i>Spare Part Diganti</h6>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead><tr><th>Nama</th><th class="text-center">Qty</th><th class="text-end">Harga</th><th class="text-end">Subtotal</th><th></th></tr></thead>
+                    <tbody>
+                    {% for d in detail_sp %}
+                    <tr>
+                        <td>{{ d.sparepart.nama_sparepart }}</td>
+                        <td class="text-center">{{ d.jumlah }}</td>
+                        <td class="text-end">{{ d.harga_satuan|rupiah }}</td>
+                        <td class="text-end fw-semibold">{{ d.subtotal|rupiah }}</td>
+                        <td>
+                            <form method="post" action="{% url 'pemeliharaan:hapus_detail_sparepart' pemeliharaan.pk d.pk %}" onsubmit="return confirm('Hapus item ini?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1"><i class="bi bi-x-lg" style="font-size:0.7rem;"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center text-muted" style="font-size:0.8rem;">Belum ada spare part</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- Form Tambah Spare Part -->
+            <form method="post" class="mt-3 border-top pt-3">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="sparepart">
+                <div class="row g-2 align-items-end">
+                    <div class="col-5">
+                        <label class="form-label" style="font-size:0.75rem;">Spare Part</label>
+                        {{ sp_form.sparepart }}
+                    </div>
+                    <div class="col-2">
+                        <label class="form-label" style="font-size:0.75rem;">Qty</label>
+                        {{ sp_form.jumlah }}
+                    </div>
+                    <div class="col-3">
+                        <label class="form-label" style="font-size:0.75rem;">Harga</label>
+                        {{ sp_form.harga_satuan }}
+                    </div>
+                    <div class="col-2">
+                        <button type="submit" class="btn btn-sm btn-primary-custom w-100"><i class="bi bi-plus"></i></button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Kolom Kanan: Jasa Servis -->
+    <div class="col-lg-6">
+        <div class="data-table p-3">
+            <h6 class="mb-3" style="font-weight:600;"><i class="bi bi-wrench-adjustable me-2 text-success"></i>Jasa Servis</h6>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead><tr><th>Nama Jasa</th><th class="text-end">Biaya</th><th></th></tr></thead>
+                    <tbody>
+                    {% for d in detail_js %}
+                    <tr>
+                        <td>{{ d.jasa_servis.nama_jasa }}</td>
+                        <td class="text-end fw-semibold">{{ d.biaya|rupiah }}</td>
+                        <td>
+                            <form method="post" action="{% url 'pemeliharaan:hapus_detail_jasaservis' pemeliharaan.pk d.pk %}" onsubmit="return confirm('Hapus item ini?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1"><i class="bi bi-x-lg" style="font-size:0.7rem;"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted" style="font-size:0.8rem;">Belum ada jasa servis</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- Form Tambah Jasa Servis -->
+            <form method="post" class="mt-3 border-top pt-3">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="jasaservis">
+                <div class="row g-2 align-items-end">
+                    <div class="col-7">
+                        <label class="form-label" style="font-size:0.75rem;">Jasa Servis</label>
+                        {{ js_form.jasa_servis }}
+                    </div>
+                    <div class="col-3">
+                        <label class="form-label" style="font-size:0.75rem;">Biaya</label>
+                        {{ js_form.biaya }}
+                    </div>
+                    <div class="col-2">
+                        <button type="submit" class="btn btn-sm btn-primary-custom w-100"><i class="bi bi-plus"></i></button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Data harga dari Django (dikirim dari views.py)
+    const spData = {{ sparepart_data|safe }};
+    const jsData = {{ jasaservis_data|safe }};
+
+    // === AUTO-FILL SPARE PART ===
+    const spSelect = document.getElementById('id_sparepart_select');
+    const spHarga = document.getElementById('id_harga_satuan');
+    
+    if(spSelect && spHarga) {
+        spSelect.addEventListener('change', function() {
+            const selectedId = this.value; // Ambil ID (PK) dari sparepart yang dipilih
+            
+            if(selectedId && spData[selectedId] !== undefined) {
+                // Jika ada harga di data, masukkan ke input harga
+                spHarga.value = spData[selectedId];
+            } else {
+                // Jika tidak dipilih (blank), kosongkan harga
+                spHarga.value = '';
+            }
+        });
+    }
+
+    // === AUTO-FILL JASA SERVIS ===
+    const jsSelect = document.getElementById('id_jasa_select');
+    const jsBiaya = document.getElementById('id_biaya_jasa');
+    
+    if(jsSelect && jsBiaya) {
+        jsSelect.addEventListener('change', function() {
+            const selectedId = this.value; // Ambil ID (PK) dari jasa servis yang dipilih
+            
+            if(selectedId && jsData[selectedId] !== undefined) {
+                // Jika ada biaya di data, masukkan ke input biaya
+                jsBiaya.value = jsData[selectedId];
+            } else {
+                // Jika tidak dipilih (blank), kosongkan biaya
+                jsBiaya.value = '';
+            }
+        });
+    }
+</script>
+{% endblock %}

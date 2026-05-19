@@ -1,0 +1,126 @@
+{% extends 'pemeliharaan/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Detail Kendaraan{% endblock %}
+{% block nav_kendaraan %}active{% endblock %}
+{% block page_title %}Detail: {{ kendaraan.nomor_polisi }}{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+    <div class="col-lg-4">
+        <div class="stat-card">
+            <h6 style="font-weight:600; color:#1e293b; margin-bottom:16px;"><i class="bi bi-info-circle me-2 text-primary"></i>Informasi Kendaraan</h6>
+            
+            <!-- TAMPILAN FOTO KENDARAAN -->
+            <div class="text-center mb-3">
+                {% if kendaraan.foto %}
+                    <img src="{{ kendaraan.foto.url }}" alt="{{ kendaraan.nomor_polisi }}" style="width: 100%; max-height: 250px; object-fit: cover; border-radius: 10px; border: 1px solid #e2e8f0;">
+                {% else %}
+                    <div style="width: 100%; height: 200px; background: #f8fafc; border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 2px dashed #cbd5e1; flex-direction: column;">
+                        <i class="bi bi-camera" style="font-size: 3rem; color: #94a3b8;"></i>
+                        <span class="text-muted mt-2" style="font-size: 0.85rem;">Tidak ada foto</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <table style="font-size:0.87rem; width: 100%;">
+                <tr><td class="text-muted pe-3 py-1" width="130">Nomor Polisi</td><td class="fw-semibold">{{ kendaraan.nomor_polisi }}</td></tr>
+                <tr><td class="text-muted pe-3 py-1">Jenis</td><td><span class="badge badge-{{ kendaraan.jenis }}">{{ kendaraan.get_jenis_display }}</span></td></tr>
+                <tr><td class="text-muted pe-3 py-1">Merk / Tipe</td><td>{{ kendaraan.merk }} {{ kendaraan.tipe }}</td></tr>
+                <tr><td class="text-muted pe-3 py-1">Tahun</td><td>{{ kendaraan.tahun_pembuatan }}</td></tr>
+                <tr><td class="text-muted pe-3 py-1">Warna</td><td>{{ kendaraan.warna }}</td></tr>
+                <tr><td class="text-muted pe-3 py-1">No. Rangka</td><td>{{ kendaraan.no_rangka|default:"-" }}</td></tr>
+                <tr><td class="text-muted pe-3 py-1">No. Mesin</td><td>{{ kendaraan.no_mesin|default:"-" }}</td></tr>
+                <tr><td class="text-muted pe-3 py-1">Pemilik</td><td>{{ kendaraan.pemilik_pengguna }}</td></tr>
+            </table>
+            <div class="mt-3">
+                <a href="{% url 'pemeliharaan:kendaraan_update' kendaraan.pk %}" class="btn btn-sm btn-outline-warning w-100"><i class="bi bi-pencil me-1"></i>Edit</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-8">
+        <!-- SUMMARY CARDS (SERVIS + BENSIN) -->
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <div class="stat-card text-center" style="border-top:3px solid #3b82f6;">
+                    <div style="font-size:0.78rem; color:#64748b;">Spare Part</div>
+                    <div style="font-size:1.2rem; font-weight:700; color:#3b82f6;">{{ total_sp|rupiah }}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card text-center" style="border-top:3px solid #22c55e;">
+                    <div style="font-size:0.78rem; color:#64748b;">Jasa Servis</div>
+                    <div style="font-size:1.2rem; font-weight:700; color:#22c55e;">{{ total_js|rupiah }}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card text-center" style="border-top:3px solid #f59e0b;">
+                    <div style="font-size:0.78rem; color:#64748b;">Konsumsi Bensin</div>
+                    <div style="font-size:1.2rem; font-weight:700; color:#f59e0b;">{{ total_bensin|rupiah }}</div>
+                    <div style="font-size:0.7rem; color:#94a3b8;">{{ total_liter|floatformat:1 }} Liter</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card text-center" style="border-top:3px solid #ef4444;">
+                    <div style="font-size:0.78rem; color:#64748b;">Grand Total</div>
+                    <div style="font-size:1.2rem; font-weight:700; color:#ef4444;">{{ grand_total|rupiah }}</div>
+                    <div style="font-size:0.7rem; color:#94a3b8;">Servis + Bensin</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIWAYAT PEMELIHARAAN -->
+        <div class="data-table p-3">
+            <h6 style="font-weight:600; color:#1e293b; margin-bottom:12px;"><i class="bi bi-clipboard-check me-2 text-primary"></i>Riwayat Pemeliharaan ({{ jumlah_servis }} kali)</h6>
+            {% if servis_list %}
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead><tr><th>Tanggal</th><th>No Servis</th><th>Bengkel</th><th class="text-end">Spare Part</th><th class="text-end">Jasa</th><th class="text-end">Total</th></tr></thead>
+                    <tbody>
+                    {% for s in servis_list %}
+                    <tr>
+                        <td>{{ s.tanggal_servis|date:"d M Y" }}</td>
+                        <td><a href="{% url 'pemeliharaan:pemeliharaan_detail' s.pk %}" style="color:#3b82f6; text-decoration:none; font-weight:500;">{{ s.no_servis }}</a></td>
+                        <td>{{ s.bengkel.nama_bengkel }}</td>
+                        <td class="text-end">{{ s.total_biaya_sparepart|rupiah }}</td>
+                        <td class="text-end">{{ s.total_biaya_jasa|rupiah }}</td>
+                        <td class="text-end fw-semibold">{{ s.total_biaya|rupiah }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted text-center py-3" style="font-size:0.85rem;">Belum ada riwayat pemeliharaan</p>
+            {% endif %}
+        </div>
+
+        <!-- RIWAYAT PENGISIAN BENSIN (BARU) -->
+        <div class="data-table p-3 mt-3">
+            <h6 style="font-weight:600; color:#1e293b; margin-bottom:12px;"><i class="bi bi-fuel-pump me-2 text-warning"></i>Riwayat Pengisian Bensin ({{ jumlah_isi }} kali)</h6>
+            {% if bensin_list %}
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead><tr><th>Tanggal</th><th>KM</th><th>SPBU</th><th class="text-end">Liter</th><th class="text-end">Harga/L</th><th class="text-end">Total</th></tr></thead>
+                    <tbody>
+                    {% for b in bensin_list %}
+                    <tr>
+                        <td>{{ b.tanggal|date:"d M Y" }}</td>
+                        <td>{{ b.km_pengisian|default:"-" }}</td>
+                        <td>{{ b.spbu|default:"-" }}</td>
+                        <td class="text-end">{{ b.liter|floatformat:2 }} L</td>
+                        <td class="text-end">{{ b.harga_per_liter|rupiah }}</td>
+                        <td class="text-end fw-semibold text-warning">{{ b.total_biaya|rupiah }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted text-center py-3" style="font-size:0.85rem;">Belum ada riwayat pengisian bensin</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

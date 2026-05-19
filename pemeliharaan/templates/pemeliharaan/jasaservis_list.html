@@ -1,0 +1,63 @@
+{% extends 'pemeliharaan/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Data Jasa Servis{% endblock %}
+{% block nav_jasaservis %}active{% endblock %}
+{% block page_title %}Data Jasa Servis{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <form method="get" class="d-flex gap-2">
+        <input type="text" name="q" class="form-control form-control-sm" placeholder="Cari kode atau nama jasa..." value="{{ search }}" style="width:280px;">
+        <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-search"></i></button>
+        {% if search %}
+        <a href="{% url 'pemeliharaan:jasaservis_list' %}" class="btn btn-sm btn-outline-secondary" title="Reset"><i class="bi bi-x-lg"></i></a>
+        {% endif %}
+    </form>
+    <a href="{% url 'pemeliharaan:jasaservis_create' %}" class="btn btn-sm btn-primary-custom">
+        <i class="bi bi-plus-lg me-1"></i>Tambah Jasa Servis
+    </a>
+</div>
+
+<div class="data-table">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Kode</th>
+                    <th>Nama Jasa Servis</th>
+                    <th class="text-end">Biaya</th>
+                    <th>Keterangan</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for obj in object_list %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td><span class="badge bg-secondary">{{ obj.kode }}</span></td>
+                <td class="fw-semibold">{{ obj.nama_jasa }}</td>
+                <td class="text-end">{{ obj.biaya|rupiah }}</td>
+                <td style="max-width:200px;">{{ obj.keterangan|truncatechars:40|default:"-" }}</td>
+                <td>
+                    <a href="{% url 'pemeliharaan:jasaservis_update' obj.pk %}" class="btn btn-sm btn-outline-warning" title="Edit"><i class="bi bi-pencil"></i></a>
+                    <form method="post" action="{% url 'pemeliharaan:jasaservis_delete' obj.pk %}" style="display:inline;" onsubmit="return confirm('Hapus jasa servis {{ obj.nama_jasa }}?')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus"><i class="bi bi-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                    <i class="bi bi-wrench-adjustable d-block" style="font-size:2rem;"></i>
+                    Belum ada data jasa servis
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

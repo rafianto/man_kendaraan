@@ -1,0 +1,66 @@
+{% extends 'pemeliharaan/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Data Pemeliharaan{% endblock %}
+{% block nav_pemeliharaan %}active{% endblock %}
+{% block page_title %}Data Pemeliharaan{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <form method="get" class="d-flex gap-2 flex-wrap">
+        <input type="text" name="q" class="form-control form-control-sm" placeholder="Cari no servis/nopol..." value="{{ search }}" style="width:180px;">
+        <input type="date" name="start" class="form-control form-control-sm" value="{{ start }}" title="Dari tanggal">
+        <input type="date" name="end" class="form-control form-control-sm" value="{{ end }}" title="Sampai tanggal">
+        <select name="jenis" class="form-select form-select-sm" style="width:140px;">
+            <option value="">Semua Jenis</option>
+            <option value="mobil" {% if jenis == 'mobil' %}selected{% endif %}>Mobil</option>
+            <option value="motor" {% if jenis == 'motor' %}selected{% endif %}>Motor</option>
+            <option value="sepeda_listrik" {% if jenis == 'sepeda_listrik' %}selected{% endif %}>Sepeda Listrik</option>
+        </select>
+        <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-search"></i></button>
+        <a href="{% url 'pemeliharaan:pemeliharaan_list' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-x-lg"></i></a>
+    </form>
+    <a href="{% url 'pemeliharaan:pemeliharaan_create' %}" class="btn btn-sm btn-primary-custom"><i class="bi bi-plus-lg me-1"></i>Tambah Servis</a>
+</div>
+
+<div class="data-table">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>No</th><th>No. Servis</th><th>Tanggal</th><th>Kendaraan</th>
+                    <th>Bengkel</th><th class="text-end">Spare Part</th><th class="text-end">Jasa</th>
+                    <th class="text-end">Total Biaya</th><th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for obj in object_list %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td><a href="{% url 'pemeliharaan:pemeliharaan_detail' obj.pk %}" style="font-weight:600; color:#3b82f6; text-decoration:none;">{{ obj.no_servis }}</a></td>
+                <td>{{ obj.tanggal_servis|date:"d M Y" }}</td>
+                <td>
+                    <span class="badge badge-{{ obj.kendaraan.jenis }} me-1" style="font-size:0.65rem;">{{ obj.kendaraan.get_jenis_display }}</span>
+                    {{ obj.kendaraan.nomor_polisi }}
+                </td>
+                <td>{{ obj.bengkel.nama_bengkel }}</td>
+                <td class="text-end">{{ obj.total_biaya_sparepart|rupiah }}</td>
+                <td class="text-end">{{ obj.total_biaya_jasa|rupiah }}</td>
+                <td class="text-end fw-semibold text-danger">{{ obj.total_biaya|rupiah }}</td>
+                <td>
+                    <a href="{% url 'pemeliharaan:pemeliharaan_detail' obj.pk %}" class="btn btn-sm btn-outline-primary" title="Detail"><i class="bi bi-eye"></i></a>
+                    <a href="{% url 'pemeliharaan:pemeliharaan_update' obj.pk %}" class="btn btn-sm btn-outline-warning" title="Edit"><i class="bi bi-pencil"></i></a>
+                    <form method="post" action="{% url 'pemeliharaan:pemeliharaan_delete' obj.pk %}" style="display:inline;" onsubmit="return confirm('Hapus servis {{ obj.no_servis }}?')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus"><i class="bi bi-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="9" class="text-center text-muted py-4">Belum ada data pemeliharaan</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

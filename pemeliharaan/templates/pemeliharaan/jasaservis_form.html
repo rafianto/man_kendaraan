@@ -1,0 +1,47 @@
+{% extends 'pemeliharaan/base.html' %}
+{% load custom_filters %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block nav_jasaservis %}active{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-6">
+        <div class="data-table p-4">
+            <h5 class="mb-3" style="font-weight:600;"><i class="bi bi-wrench-adjustable me-2 text-primary"></i>{{ title }}</h5>
+            <form method="post">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">{{ form.kode.label }}</label>
+                        {{ form.kode }}
+                        {% if form.kode.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ form.kode.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label fw-semibold">{{ form.nama_jasa.label }}</label>
+                        {{ form.nama_jasa }}
+                        {% if form.nama_jasa.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ form.nama_jasa.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">{{ form.biaya.label }}</label>
+                        <div class="input-group">
+                            <span class="input-group-text">Rp</span>
+                            {{ form.biaya }}
+                        </div>
+                        {% if form.biaya.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ form.biaya.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">{{ form.keterangan.label }}</label>
+                        {{ form.keterangan }}
+                    </div>
+                </div>
+                <div class="mt-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary-custom"><i class="bi bi-save me-1"></i>Simpan</button>
+                    <a href="{% url 'pemeliharaan:jasaservis_list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Batal</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends 'pemeliharaan/base.html' %}
+{% load custom_filters %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block nav_bensin %}active{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="data-table p-4">
+            <h5 class="mb-3" style="font-weight:600;"><i class="bi bi-fuel-pump me-2 text-warning"></i>{{ title }}</h5>
+            <form method="post">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">{{ form.kendaraan.label }}</label>
+                        {{ form.kendaraan }}
+                        {% if form.kendaraan.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ form.kendaraan.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">{{ form.tanggal.label }}</label>
+                        {{ form.tanggal }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">{{ form.km_pengisian.label }}</label>
+                        {{ form.km_pengisian }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">{{ form.liter.label }}</label>
+                        {{ form.liter }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">{{ form.harga_per_liter.label }}</label>
+                        <div class="input-group">
+                            <span class="input-group-text">Rp</span>
+                            {{ form.harga_per_liter }}
+                        </div>
+                    </div>
+                    
+                    <!-- Preview Total Biaya -->
+                    <div class="col-12">
+                        <div class="alert alert-info py-2 d-flex justify-content-between align-items-center" style="font-size:0.9rem;">
+                            <span class="fw-semibold">Total Biaya (Otomatis):</span>
+                            <span id="preview-total-bensin" class="fw-bold" style="font-size:1.1rem; color:#ef4444;">Rp 0</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">{{ form.spbu.label }}</label>
+                        {{ form.spbu }}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">{{ form.keterangan.label }}</label>
+                        {{ form.keterangan }}
+                    </div>
+                </div>
+                <div class="mt-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary-custom"><i class="bi bi-save me-1"></i>Simpan</button>
+                    
+                    <a href="{% url 'pemeliharaan:bensin_list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Batal</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto calculate total bensin
+    const literInput = document.getElementById('id_liter_bensin');
+    const hargaInput = document.getElementById('id_harga_per_liter');
+    const previewTotal = document.getElementById('preview-total-bensin');
+
+    function formatRupiah(angka) {
+        return "Rp " + angka.toFixed(0).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+    }
+
+    function hitungBensin() {
+        const liter = parseFloat(literInput.value) || 0;
+        const harga = parseFloat(hargaInput.value) || 0;
+        const total = liter * harga;
+        previewTotal.innerText = formatRupiah(total);
+    }
+
+    if(literInput && hargaInput) {
+        literInput.addEventListener('input', hitungBensin);
+        hargaInput.addEventListener('input', hitungBensin);
+        
+        // Hitung saat pertama kali load (untuk edit form)
+        hitungBensin(); 
+    }
+</script>
+{% endblock %}

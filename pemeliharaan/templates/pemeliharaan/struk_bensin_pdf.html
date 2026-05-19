@@ -1,0 +1,108 @@
+<html>
+<head>
+    <style>
+        /* PENTING: xhtml2pdf tidak support 'auto' di size, gunakan ukuran pasti */
+        @page {
+            size: 80mm 200mm; /* Lebar 80mm (struk) x Tinggi 200mm */
+            margin: 3mm;
+        }
+        body {
+            font-family: Courier;
+            font-size: 11px;
+            color: #000000;
+            line-height: 1.4;
+        }
+        .center { text-align: center; }
+        .right { text-align: right; }
+        .bold { font-weight: bold; }
+        .separator { 
+            border-top: 1px dashed #000000; 
+            margin: 5px 0; 
+        }
+        table { 
+            width: 100%; 
+        }
+        td { 
+            padding: 2px 0; 
+            vertical-align: top; 
+        }
+        .total-table td { padding: 4px 0; }
+    </style>
+</head>
+<body>
+    <!-- HEADER STRUK -->
+    <div class="center bold" style="font-size: 14px;">GADING FORCE</div>
+    <div class="center">Divisi Kendaraan</div>
+    <div class="center" style="font-size: 9px;">Ds. Guyangan RT 01 RW 03 No 6 Madureso, Kuwarasan</div>
+    <div class="center" style="font-size: 9px;">Telp: (021) 555-8899</div>
+    
+    <div class="separator"></div>
+    <div class="center bold" style="font-size: 12px;">STRUK PENGISIAN BAHAN BAKAR</div>
+    <div class="separator"></div>
+
+    <!-- INFORMASI TRANSAKSI -->
+    <table>
+        <tr>
+            <td>No. Transaksi</td>
+            <td class="right">TRX-BNS-{{ bensin.id }}</td>
+        </tr>
+        <tr>
+            <td>Tanggal</td>
+            <td class="right">{{ bensin.tanggal|date:"d/m/Y" }}</td>
+        </tr>
+        <tr>
+            <td>Kendaraan</td>
+            <td class="right">{{ bensin.kendaraan.nomor_polisi }}</td>
+        </tr>
+        <tr>
+            <td>Pengguna</td>
+            <td class="right">{{ bensin.kendaraan.pemilik_pengguna }}</td>
+        </tr>
+    </table>
+
+    <div class="separator"></div>
+
+    <!-- DETAIL PENGISIAN -->
+    <table>
+        <tr>
+            <td>SPBU</td>
+            <td class="right">{{ bensin.spbu|default:"-" }}</td>
+        </tr>
+        <tr>
+            <td>KM Saat Isi</td>
+            <td class="right">{{ bensin.km_pengisian|default:"-" }} KM</td>
+        </tr>
+        <tr>
+            <td>Jenis Bahan Bakar</td>
+            <td class="right">Bensin</td>
+        </tr>
+        <tr>
+            <td>Volume</td>
+            <td class="right">{{ bensin.liter|floatformat:2 }} Liter</td>
+        </tr>
+        <tr>
+            <td>Harga / Liter</td>
+            <td class="right">Rp {{ bensin.harga_per_liter|floatformat:0 }}</td>
+        </tr>
+    </table>
+
+    <div class="separator" style="border-top: 2px solid #000000;"></div>
+
+    <!-- TOTAL BIAYA -->
+    <table class="total-table">
+        <tr>
+            <td class="bold" style="font-size: 14px;">TOTAL BAYAR</td>
+            <td class="right bold" style="font-size: 14px;">Rp {{ bensin.total_biaya|floatformat:0 }}</td>
+        </tr>
+    </table>
+
+    <div class="separator"></div>
+
+    <!-- FOOTER -->
+    <div class="center" style="font-size: 9px; margin-top: 5px;">
+        <p>Terima kasih atas pengisian bahan bakar.</p>
+        <p>Simpan struk ini sebagai bukti pembayaran.</p>
+        <p style="margin-top: 10px;">Dicetak pada: {% now "d/m/Y H:i" %}</p>
+    </div>
+</body>
+</html>
