@@ -1,0 +1,17 @@
+python manage.py shell -c "from django.conf import settings; print(settings.DATABASES)"
+
+python manage.py runserver --noreload
+
+del db.sqlite3
+
+dir pemeliharaan\migrations\
+
+del pemeliharaan\migrations\0*.py
+
+python manage.py makemigrations pemeliharaan
+python manage.py migrate
+
+python manage.py createsuperuser
+
+
+python manage.py shell -c "from django.db import connection; cursor = connection.cursor(); cursor.execute('PRAGMA table_info(pemeliharaan_sparepart)'); print([row for row in cursor.fetchall()])"
